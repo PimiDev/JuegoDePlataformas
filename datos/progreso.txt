@@ -1,0 +1,2 @@
+puntaje=0
+jugador=player
