@@ -29,8 +29,6 @@ public class Main extends Application {
         Scene gameScene = new Scene(root, 800, 600);
         game.setupInput(gameScene);
 
-
-
         btnStart.setOnAction(e -> {
             primaryStage.setScene(gameScene);
             game.start();
@@ -38,10 +36,6 @@ public class Main extends Application {
 
         btnSalir.setOnAction(e -> primaryStage.close());
 
-
-        // ====================================================
-        //                   MOSTRAR MENÚ
-        // ====================================================
         primaryStage.setTitle("Juego Plataforma 2D - JavaFX");
         primaryStage.setScene(menuScene);
         primaryStage.show();

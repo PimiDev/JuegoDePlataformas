@@ -20,7 +20,7 @@ public class Jugador extends Entidad {
     }
 
     public void moverIzquierda() { x -= 5; if (x < 0) x = 0; }
-    public void moverDerecha() { x += 5; if (x + width > 800) x = 800 - width; }
+    public void moverDerecha() { x += 5; if (x + width > 2000) x = 800 - width; }
     public void saltar() { if (enSuelo) { velY = -10; enSuelo = false; } }
 
     public void applyGravity() {

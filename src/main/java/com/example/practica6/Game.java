@@ -34,6 +34,7 @@ public class Game {
     private AnimationTimer loop;
 
     private MediaPlayer musica;
+    private double cameraX = 0;
 
 
     public Game(int width, int height) {
@@ -55,7 +56,7 @@ public class Game {
         entidades.add(jugador);
 
         // Plataformas (suelo + dos plataformas elevadas)
-        plataformas.add(new Plataforma(0, 540, 800, 60)); // suelo
+        plataformas.add(new Plataforma(0, 540, 2000, 60)); // suelo
         plataformas.add(new Plataforma(200, 420, 120, 20));
         plataformas.add(new Plataforma(450, 350, 150, 20));
 
@@ -64,7 +65,7 @@ public class Game {
         EnemigoVolador ev = new EnemigoVolador(600, 200, 40, 40, 1.2);
 
         //Item
-        Item item = new Item(100,450,40,40);
+        Item item = new Item(100,350,40,40);
 
         entidades.add(et);
         entidades.add(ev);
@@ -155,25 +156,36 @@ public class Game {
                 }
             }
         }
+        cameraX = jugador.getX() - width / 2;
+        if (cameraX < 0) cameraX = 0;
 
         // remove dead or collected items if any (not implemented but placeholder)
     }
 
     private void dibujar() {
-        // clear
+        // clear pantalla
         gc.setFill(Color.web("#1e1e1e"));
         gc.fillRect(0, 0, width, height);
 
-        // draw platforms
+        //activar camara
+        gc.save();
+        gc.translate(-cameraX, 0);   // mueve todo el mundo según la cámara
+
+        // dibujar plataformas
         gc.setFill(Color.SADDLEBROWN);
         for (Plataforma p : plataformas) {
             p.draw(gc);
         }
 
-        // draw entities
-        for (Entidad e : entidades) e.draw(gc);
+        // dibujar entidades
+        for (Entidad e : entidades) {
+            e.draw(gc);
+        }
 
-        // HUD
+        // DESACTIVAR CÁMARA (HUD queda fijo)
+        gc.restore();
+
+        // HUD (no se mueve con la cámara)
         gc.setFill(Color.WHITE);
         gc.setFont(Font.font(18));
         gc.fillText("Puntaje: " + jugador.getPuntaje(), 20, 30);
