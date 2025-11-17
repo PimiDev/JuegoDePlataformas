@@ -52,7 +52,7 @@ public class Game {
         entidades = new ArrayList<>();
         plataformas = new ArrayList<>();
 
-        jugador = new Jugador(50, 450, 52, 71);
+        jugador = new Jugador(50, 450, 48, 72);
         entidades.add(jugador);
 
         // Plataformas (suelo + dos plataformas elevadas)
@@ -67,6 +67,11 @@ public class Game {
         //Item
         Item item = new Item(100,350,40,40);
 
+        //amigos
+        Aliado aliado = new Aliado(100,450,48,72);
+
+
+        entidades.add(aliado);
         entidades.add(et);
         entidades.add(ev);
         entidades.add(item);
@@ -133,6 +138,8 @@ public class Game {
 
         // gravedad & plataformas collision for player
         jugador.applyGravity();
+
+
         boolean onPlatform = false;
         for (Plataforma p : plataformas) {
             if (jugador.getBounds().intersects(p.getBounds())) {
@@ -155,6 +162,17 @@ public class Game {
                     jugador.addPuntaje(1);
                 }
             }
+            if (en instanceof Aliado aliado) {
+                aliado.applyGravity();
+                if(jugador.getBounds().intersects(aliado.getBounds())) {
+                    System.out.println("me tocaste");
+                }
+                for(Plataforma p : plataformas) {
+                    if (aliado.getBounds().intersects(p.getBounds())) {
+                        aliado.landOn(p);
+                    }
+                }
+            }
         }
         cameraX = jugador.getX() - width / 2;
         if (cameraX < 0) cameraX = 0;
@@ -169,7 +187,7 @@ public class Game {
 
         //activar camara
         gc.save();
-        gc.translate(-cameraX, 0);   // mueve todo el mundo según la cámara
+        gc.translate(-cameraX, 0);   // mueve todo el mundo
 
         // dibujar plataformas
         gc.setFill(Color.SADDLEBROWN);
