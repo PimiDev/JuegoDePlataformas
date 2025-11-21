@@ -17,7 +17,7 @@ public class Plataforma {
     }
     public Rectangle2D getBounds() { return new Rectangle2D(x,y,width,height); }
     public void draw(GraphicsContext gc) {
-        gc.setFill(Color.DARKOLIVEGREEN);
+        gc.setFill(Color.GREEN);
         gc.fillRect(x,y,width,height);
     }
     public double getY() { return y; }

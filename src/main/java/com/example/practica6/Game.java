@@ -36,7 +36,7 @@ public class Game {
     private MediaPlayer musica;
     private double cameraX = 0;
 
-    private String mensajePimi = "";
+    private String mensajeAleado = "";
     private int mensajeTimer = 0;
 
     private MediaPlayer sonidoItem;
@@ -54,7 +54,7 @@ public class Game {
     public Canvas getCanvas() { return canvas; }
 
     private void init() {
-        fondo = new Image("file:assets/images/fondo.png");
+        fondo = new Image("file:assets/images/fondo2.jpg");
 
 
         archivoJuego = new ArchivoJuego("datos/progreso.txt");
@@ -65,10 +65,9 @@ public class Game {
         jugador = new Jugador(50, 450, 48, 72);
         entidades.add(jugador);
 
-        // ---------- NIVEL COMPLETO (sin inventar ninguna función nueva) ---------
 
 // Aliado al inicio
-        entidades.add(new Aliado(100, 450, 48, 72, "file:assets/images/pimi.png"));
+        entidades.add(new Pimi(100, 450, 48, 72));
 
 // -------------------- PLATAFORMAS --------------------
         plataformas.add(new Plataforma(0, 540, 2000, 60));       // suelo largo
@@ -76,32 +75,19 @@ public class Game {
         plataformas.add(new Plataforma(200, 430, 150, 25));
         plataformas.add(new Plataforma(420, 380, 150, 25));
         plataformas.add(new Plataforma(650, 340, 180, 25));
+        plataformas.add(new Plataforma(1500, 430, 180, 25));
 
-        plataformas.add(new Plataforma(900, 500, 180, 40));      // zona de enemigos
-        plataformas.add(new Plataforma(900, 420, 120, 40));
-        plataformas.add(new Plataforma(900, 350, 120, 40));
-        plataformas.add(new Plataforma(900, 280, 120, 40));      // torre
+        entidades.add(new CarroBomba(830, 500, 40, 40, 2, 830, 2000));
+        entidades.add(new CarroBomba(900, 500, 40, 40, 2, 900, 2000));
+        entidades.add(new CarroBomba(970, 500, 40, 40, 2, 970, 2000));
+        entidades.add(new CarroBomba(1040, 500, 40, 40, 2, 1040, 2000));
+        entidades.add(new CarroBomba(1110, 500, 40, 40, 2, 1110, 2000));
 
-        plataformas.add(new Plataforma(1150, 260, 200, 40));     // plataforma final
-        plataformas.add(new Plataforma(1500, 540, 200, 60));     // meta
-
-
-// -------------------- ENEMIGOS --------------------
-        entidades.add(new CarroBomba(300, 500, 40, 40, 1.5, 200, 500));
-        entidades.add(new CarroBomba(950, 450, 40, 40, 2.0, 900, 1200));
-        entidades.add(new CarroBomba(1250, 220, 40, 40, 1.2, 1200, 1600));
-        // enemigo final
-
-
-// -------------------- ITEMS --------------------
         entidades.add(new Item(230, 390, 40, 40));
         entidades.add(new Item(470, 340, 40, 40));
         entidades.add(new Item(690, 300, 40, 40));   // escalera de items
 
-        entidades.add(new Item(930, 240, 40, 40));   // cima torre
-        entidades.add(new Item(1180, 220, 40, 40));  // final
-
-
+        entidades.add(new Item(1550, 370, 40, 40));
 
         // Setup loop
         loop = new AnimationTimer() {
@@ -240,8 +226,7 @@ public class Game {
             if (en instanceof Aliado aliado) {
                 aliado.applyGravity();
                 if (jugador.getBounds().intersects(aliado.getBounds())) {
-                    mensajePimi = "Y la verdad es que no soy \n tan fuerte como" +
-                            " lo pensaba\n oye podrias avisarme si ves a derek?\nesta MUY enojado conmigo!";
+                    mensajeAleado = aliado.getMensaje();
                     mensajeTimer = 600; // 3 segundos aprox (60 fps)
                 }
 
@@ -262,9 +247,22 @@ public class Game {
         // clear pantalla
         // DIBUJAR FONDO ANTES DE CUALQUIER COSA
         //gc.drawImage(fondo, 0, 0, width, height);
-        gc.setFill(Color.web("#87CEEB")); // azul cielo
-
+        // Limpiar pantalla y dibujar fondo sin suavizado
+        gc.setFill(Color.BLACK);
         gc.fillRect(0, 0, width, height);
+
+        // FONDO SCROLL
+        if (fondo != null) {
+            gc.setImageSmoothing(false);
+
+            double offsetX = cameraX * 0.5; // la velocidad del fondo, 0.5 = más lento que jugador (parallax)
+            double fondoWidth = fondo.getWidth();
+
+            // Dibuja el fondo varias veces para cubrir la pantalla
+            for (double x = -offsetX % fondoWidth; x < width; x += fondoWidth) {
+                gc.drawImage(fondo, x, 0);
+            }
+        }
 
 
 
@@ -309,7 +307,7 @@ public class Game {
         if (mensajeTimer > 0) {
             gc.setFill(Color.BLACK);
             gc.setFont(pixelFont);
-            gc.fillText(mensajePimi, 20, 90);
+            gc.fillText(mensajeAleado, 20, 90);
             mensajeTimer--;
         }
 

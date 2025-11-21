@@ -5,13 +5,16 @@ import javafx.scene.paint.Color;
 
 public class Aliado extends Entidad {
 
-    private Image sprite;
-    private double velY = 0;
-    private boolean enSuelo = false;
-    public Aliado(double x, double y, double width, double height , String direccion) {
+    protected Image sprite;
+
+    protected String mensaje;
+
+    protected double velY = 0;
+    protected boolean enSuelo = false;
+    public Aliado(double x, double y, double width, double height) {
         super(x, y, width, height);
         try {
-            sprite = new Image(direccion);
+            sprite = new Image("file:assets/images/friend.png");
         } catch (Exception e) { sprite = null; }
     }
 
@@ -40,5 +43,9 @@ public class Aliado extends Entidad {
             gc.setFill(Color.BLUE);
             gc.fillRect(x,y,width,height);
         }
+    }
+
+    public String getMensaje() {
+        return mensaje;
     }
 }
