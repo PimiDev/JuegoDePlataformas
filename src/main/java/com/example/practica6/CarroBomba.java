@@ -8,15 +8,19 @@ public class CarroBomba extends EnemigoTerrestre {
     private int frameIndex = 0;
     private int frameCounter = 0; //velocidad
 
-    public CarroBomba(double x, double y, double width, double height, double velX) {
+    private double minX, maxX;
+
+    public CarroBomba(double x, double y, double width, double height, double velX, double minX, double maxX) {
         super(x, y, width, height, velX);
+        this.minX = minX;
+        this.maxX = maxX;
 
         Frames = new Image[]{
-                new Image("file:assets/images/car1.png", 0, 0, true, false),
-                new Image("file:assets/images/car2.png", 0, 0, true, false)
+                new Image("file:assets/images/car1.png"),
+                new Image("file:assets/images/car2.png")
         };
-
     }
+
 
     @Override
     public void update() {
@@ -34,7 +38,11 @@ public class CarroBomba extends EnemigoTerrestre {
 
         // Movimiento
         x += velX;
-        if (x < 0 || x + width > 800) velX *= -1;
+
+        if (x < minX || x + width > maxX) {
+            velX *= -1;
+        }
+
     }
 
     @Override

@@ -61,30 +61,47 @@ public class Game {
         entidades = new ArrayList<>();
         plataformas = new ArrayList<>();
 
-        Aliado aliado = new Aliado(100,450,48,72 ,  "file:assets/images/pimi.png");
-
 
         jugador = new Jugador(50, 450, 48, 72);
         entidades.add(jugador);
 
-        // Plataformas (suelo + dos plataformas elevadas)
-        plataformas.add(new Plataforma(0, 540, 2000, 60)); // suelo
-        plataformas.add(new Plataforma(200, 420, 120, 20));
-        plataformas.add(new Plataforma(450, 350, 150, 20));
+        // ---------- NIVEL COMPLETO (sin inventar ninguna función nueva) ---------
 
-        // Enemigos
-        CarroBomba cb1 = new CarroBomba(300, 500, 40, 40, 1.5);
-        //EnemigoVolador ev = new EnemigoVolador(600, 200, 40, 40, 1.2);
-        int xItem = 450;
-        for (int i = 0; i < 5; i++) {
-            Item item = new Item(xItem, 500, 40, 40);
-            entidades.add(item);
-            xItem += 50;
-        }
-        //amigos
-        entidades.add(aliado);
-        entidades.add(cb1);
-        //entidades.add(ev);
+// Aliado al inicio
+        entidades.add(new Aliado(100, 450, 48, 72, "file:assets/images/pimi.png"));
+
+// -------------------- PLATAFORMAS --------------------
+        plataformas.add(new Plataforma(0, 540, 2000, 60));       // suelo largo
+
+        plataformas.add(new Plataforma(200, 430, 150, 25));
+        plataformas.add(new Plataforma(420, 380, 150, 25));
+        plataformas.add(new Plataforma(650, 340, 180, 25));
+
+        plataformas.add(new Plataforma(900, 500, 180, 40));      // zona de enemigos
+        plataformas.add(new Plataforma(900, 420, 120, 40));
+        plataformas.add(new Plataforma(900, 350, 120, 40));
+        plataformas.add(new Plataforma(900, 280, 120, 40));      // torre
+
+        plataformas.add(new Plataforma(1150, 260, 200, 40));     // plataforma final
+        plataformas.add(new Plataforma(1500, 540, 200, 60));     // meta
+
+
+// -------------------- ENEMIGOS --------------------
+        entidades.add(new CarroBomba(300, 500, 40, 40, 1.5, 200, 500));
+        entidades.add(new CarroBomba(950, 450, 40, 40, 2.0, 900, 1200));
+        entidades.add(new CarroBomba(1250, 220, 40, 40, 1.2, 1200, 1600));
+        // enemigo final
+
+
+// -------------------- ITEMS --------------------
+        entidades.add(new Item(230, 390, 40, 40));
+        entidades.add(new Item(470, 340, 40, 40));
+        entidades.add(new Item(690, 300, 40, 40));   // escalera de items
+
+        entidades.add(new Item(930, 240, 40, 40));   // cima torre
+        entidades.add(new Item(1180, 220, 40, 40));  // final
+
+
 
         // Setup loop
         loop = new AnimationTimer() {
