@@ -11,23 +11,73 @@ public class Jugador extends Entidad {
     private int puntaje = 0;
     private boolean vivo = true;
     private Image sprite;
+    private boolean isQuieto = true;
+    private boolean isMoviendoseIzquierda = false;
+    private boolean isMoviendoseDerecha = false;
+
+    private Image[] idleFrames;
+    private Image[] runFrames;
+    private int frameIndex = 0;
+    private int frameCounter = 0; //velocidad
 
     public Jugador(double x, double y, double width, double height) {
         super(x,y,width,height);
-        try {
-            sprite = new Image("file:assets/images/player.png");
-        } catch (Exception e) { sprite = null; }
+        idleFrames = new Image[]{
+                new Image("file:assets/images/artemioIDLE.png", 0, 0, true, false),
+                new Image("file:assets/images/artemioIDLE2.png", 0, 0, true, false)
+        };
+
+        runFrames = new Image[]{
+                new Image("file:assets/images/artemioRUN.png", 0, 0, true, false),
+                new Image("file:assets/images/artemioRUN2.png", 0, 0, true, false),
+                new Image("file:assets/images/artemioRUN3.png", 0, 0, true, false)
+        };
     }
 
-    public void moverIzquierda() { x -= 5; if (x < 0) x = 0; }
-    public void moverDerecha() { x += 5; if (x + width > 2000) x = 800 - width; }
-    public void saltar() { if (enSuelo) { velY = -10; enSuelo = false; } }
+    public void moverIzquierda() {
+        if (isQuieto) frameIndex = 0;
+
+        x -= 5;
+        if (x < 0) x = 0;
+        isQuieto = false;
+        isMoviendoseIzquierda = true;
+        isMoviendoseDerecha = false;
+
+    }
+    public void moverDerecha() {
+        if (isQuieto) frameIndex = 0;
+        x += 5;
+
+        isQuieto = false;
+        isMoviendoseDerecha = true;
+        isMoviendoseIzquierda = false;
+    }
+
+    public boolean saltar() {
+        if (enSuelo) {
+            velY = -12;
+            enSuelo = false;
+            return true; // SOLO aquí saltó
+        }
+        return false; // si estaba en el aire → no suena
+    }
+
 
     public void applyGravity() {
         velY += 0.5;
         y += velY;
         if (y > 1000) { vivo = false; }
     }
+
+    public void quedarseQuieto() {
+        if (!isQuieto) {
+            frameIndex = 0;
+        }
+        isQuieto = true;
+        isMoviendoseDerecha = false;
+        isMoviendoseIzquierda = false;
+    }
+
 
     public void landOn(Plataforma p) {
         // simple landing: place on top
@@ -38,16 +88,37 @@ public class Jugador extends Entidad {
 
     @Override
     public void update() {
-        // could add animations
+        frameCounter++;
+        if (frameCounter > 20)  { // Cambia frame cada 10 updates
+            frameCounter = 0; frameIndex++; }
+        if (isQuieto) {
+            if (frameIndex >= idleFrames.length) frameIndex = 0;
+        } else {
+            if (frameIndex >= runFrames.length) frameIndex = 0; }
     }
-
     @Override
     public void draw(GraphicsContext gc) {
-        if (sprite != null) {
-            gc.drawImage(sprite, x, y, width, height);
+        gc.setImageSmoothing(false);
+
+        Image frame;
+
+        if (isQuieto) {
+            frame = idleFrames[frameIndex];
         } else {
-            gc.setFill(Color.BLUE);
-            gc.fillRect(x,y,width,height);
+            frame = runFrames[frameIndex];
+        }
+
+        if (isMoviendoseIzquierda) {
+            // DIBUJO ESPEJO
+            gc.drawImage(
+                    frame,
+                    x + width,  // mover origen a la derecha
+                    y,
+                    -width,     // escala negativa → espejo
+                    height
+            );
+        } else {
+            gc.drawImage(frame, x, y, width, height);
         }
     }
 

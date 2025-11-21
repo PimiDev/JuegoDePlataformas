@@ -8,10 +8,10 @@ public class Aliado extends Entidad {
     private Image sprite;
     private double velY = 0;
     private boolean enSuelo = false;
-    public Aliado(double x, double y, double width, double height) {
+    public Aliado(double x, double y, double width, double height , String direccion) {
         super(x, y, width, height);
         try {
-            sprite = new Image("file:assets/images/friend.png");
+            sprite = new Image(direccion);
         } catch (Exception e) { sprite = null; }
     }
 
@@ -32,6 +32,8 @@ public class Aliado extends Entidad {
     }
     @Override
     public void draw(GraphicsContext gc) {
+        gc.setImageSmoothing(false);
+
         if (sprite != null) {
             gc.drawImage(sprite, x, y, width, height);
         } else {

@@ -30,11 +30,17 @@ public class Game {
     private List<Plataforma> plataformas;
     private Set<KeyCode> keys = new HashSet<>();
     private ArchivoJuego archivoJuego;
-
+    private Image fondo;
     private AnimationTimer loop;
 
     private MediaPlayer musica;
     private double cameraX = 0;
+
+    private String mensajePimi = "";
+    private int mensajeTimer = 0;
+
+    private MediaPlayer sonidoItem;
+    private MediaPlayer sonidoSalto;
 
 
     public Game(int width, int height) {
@@ -48,9 +54,15 @@ public class Game {
     public Canvas getCanvas() { return canvas; }
 
     private void init() {
+        fondo = new Image("file:assets/images/fondo.png");
+
+
         archivoJuego = new ArchivoJuego("datos/progreso.txt");
         entidades = new ArrayList<>();
         plataformas = new ArrayList<>();
+
+        Aliado aliado = new Aliado(100,450,48,72 ,  "file:assets/images/pimi.png");
+
 
         jugador = new Jugador(50, 450, 48, 72);
         entidades.add(jugador);
@@ -61,20 +73,19 @@ public class Game {
         plataformas.add(new Plataforma(450, 350, 150, 20));
 
         // Enemigos
-        EnemigoTerrestre et = new EnemigoTerrestre(300, 500, 40, 40, 1.5);
-        EnemigoVolador ev = new EnemigoVolador(600, 200, 40, 40, 1.2);
-
-        //Item
-        Item item = new Item(100,350,40,40);
-
+        CarroBomba cb1 = new CarroBomba(300, 500, 40, 40, 1.5);
+        //EnemigoVolador ev = new EnemigoVolador(600, 200, 40, 40, 1.2);
+        int xItem = 450;
+        for (int i = 0; i < 5; i++) {
+            Item item = new Item(xItem, 500, 40, 40);
+            entidades.add(item);
+            xItem += 50;
+        }
         //amigos
-        Aliado aliado = new Aliado(100,450,48,72);
-
-
         entidades.add(aliado);
-        entidades.add(et);
-        entidades.add(ev);
-        entidades.add(item);
+        entidades.add(cb1);
+        //entidades.add(ev);
+
         // Setup loop
         loop = new AnimationTimer() {
             private long last = 0;
@@ -99,11 +110,28 @@ public class Game {
         }
 
         iniciarMusica();
+
+        try {
+            Media mItem = new Media(new java.io.File("assets/sounds/item.mp3").toURI().toString());
+            sonidoItem = new MediaPlayer(mItem);
+        } catch (Exception e) {
+            System.out.println("No se pudo cargar el sonido del item");
+        }
+
+        try {
+            Media mSalto = new Media(new java.io.File("assets/sounds/jump.mp3").toURI().toString());
+            sonidoSalto = new MediaPlayer(mSalto);
+        } catch (Exception e) {
+            System.out.println("No se pudo cargar el sonido de salto");
+        }
+
+
+
     }
 
     private void iniciarMusica() {
         try {
-            String path = "assets/music/fondo.mp3";    // tu ruta
+            String path = "assets/music/fuerteNoSoy.mp3";    // tu ruta
             Media m = new Media(new java.io.File(path).toURI().toString());
             musica = new MediaPlayer(m);
             musica.setCycleCount(MediaPlayer.INDEFINITE); // loop infinito
@@ -122,7 +150,22 @@ public class Game {
                 guardar();
             }
         });
-        scene.addEventHandler(KeyEvent.KEY_RELEASED, e -> keys.remove(e.getCode()));
+        scene.addEventHandler(KeyEvent.KEY_RELEASED, e -> {
+            keys.remove(e.getCode());
+
+            // si soltaste una de movimiento
+            if (e.getCode() == KeyCode.LEFT || e.getCode() == KeyCode.RIGHT) {
+
+                // PERO SIGUES PRESIONANDO OTRA → NO QUIETO
+                if (keys.contains(KeyCode.LEFT)) return;
+                if (keys.contains(KeyCode.RIGHT)) return;
+
+                // si no hay movimiento → sí quieto
+                jugador.quedarseQuieto();
+            }
+        });
+
+
     }
 
     public void start() { loop.start(); }
@@ -131,7 +174,14 @@ public class Game {
         // input
         if (keys.contains(KeyCode.LEFT)) jugador.moverIzquierda();
         if (keys.contains(KeyCode.RIGHT)) jugador.moverDerecha();
-        if (keys.contains(KeyCode.SPACE)) jugador.saltar();
+        if (keys.contains(KeyCode.SPACE)){
+            if (jugador.saltar()) {     // si el salto realmente ocurrió
+                if (sonidoSalto != null) {
+                    sonidoSalto.stop();
+                    sonidoSalto.play();
+                }
+            }
+        }
 
         // update entities
         for (Entidad en : entidades) en.update();
@@ -158,15 +208,26 @@ public class Game {
             }
             if (en instanceof Item item){
                 if (!item.isRecogido() && jugador.getBounds().intersects(en.getBounds())) {
+
                     item.recoger();
                     jugador.addPuntaje(1);
+
+                    // 🔊 Reproducir sonido
+                    if (sonidoItem != null) {
+                        sonidoItem.stop();  // reinicia si ya se había reproducido
+                        sonidoItem.play();
+                    }
                 }
             }
+
             if (en instanceof Aliado aliado) {
                 aliado.applyGravity();
-                if(jugador.getBounds().intersects(aliado.getBounds())) {
-                    System.out.println("me tocaste");
+                if (jugador.getBounds().intersects(aliado.getBounds())) {
+                    mensajePimi = "Y la verdad es que no soy \n tan fuerte como" +
+                            " lo pensaba\n oye podrias avisarme si ves a derek?\nesta MUY enojado conmigo!";
+                    mensajeTimer = 600; // 3 segundos aprox (60 fps)
                 }
+
                 for(Plataforma p : plataformas) {
                     if (aliado.getBounds().intersects(p.getBounds())) {
                         aliado.landOn(p);
@@ -182,8 +243,14 @@ public class Game {
 
     private void dibujar() {
         // clear pantalla
-        gc.setFill(Color.web("#1e1e1e"));
+        // DIBUJAR FONDO ANTES DE CUALQUIER COSA
+        //gc.drawImage(fondo, 0, 0, width, height);
+        gc.setFill(Color.web("#87CEEB")); // azul cielo
+
         gc.fillRect(0, 0, width, height);
+
+
+
 
         //activar camara
         gc.save();
@@ -205,17 +272,32 @@ public class Game {
 
         // HUD (no se mueve con la cámara)
         gc.setFill(Color.WHITE);
-        gc.setFont(Font.font(18));
-        gc.fillText("Puntaje: " + jugador.getPuntaje(), 20, 30);
+        Font pixelFont = Font.loadFont("file:assets/fonts/Minecraft.ttf", 24);
+        gc.setFont(pixelFont); // ← ESTA ES LA PARTE QUE FALTABA
+
+        gc.fillText("RESISTENCIAS: " + jugador.getPuntaje(), 20, 30);
         gc.fillText("Presiona 'S' para guardar", 20, 55);
 
         if (!jugador.isVivo()) {
             gc.setFill(Color.color(0,0,0,0.6));
             gc.fillRect(0, 0, width, height);
+
+            gc.setFont(pixelFont);
             gc.setFill(Color.WHITE);
-            gc.setFont(Font.font(36));
             gc.fillText("¡Has perdido!", width/2 - 100, height/2);
         }
+
+
+        // Mostrar mensaje sobre el HUD
+        if (mensajeTimer > 0) {
+            gc.setFill(Color.BLACK);
+            gc.setFont(pixelFont);
+            gc.fillText(mensajePimi, 20, 90);
+            mensajeTimer--;
+        }
+
+
+
     }
 
     private void guardar() {
