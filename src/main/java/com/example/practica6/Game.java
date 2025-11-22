@@ -68,26 +68,56 @@ public class Game {
 
 // Aliado al inicio
         entidades.add(new Pimi(100, 450, 48, 72));
-
+        entidades.add(new Derek(2500, 450, 48, 88));
 // -------------------- PLATAFORMAS --------------------
+        //islaaaaaaaaas
         plataformas.add(new Plataforma(0, 540, 2000, 60));       // suelo largo
+        plataformas.add(new Plataforma(2200, 540, 2000, 60));
 
+        //normaleeeeees
         plataformas.add(new Plataforma(200, 430, 150, 25));
         plataformas.add(new Plataforma(420, 380, 150, 25));
         plataformas.add(new Plataforma(650, 340, 180, 25));
         plataformas.add(new Plataforma(1500, 430, 180, 25));
 
+        //segunda isla
+        plataformas.add(new Plataforma(2300, 430, 150, 25));
+        plataformas.add(new Plataforma(2520, 380, 150, 25));
+        plataformas.add(new Plataforma(2750, 430, 180, 25));
+
+        plataformas.add(new Plataforma(3000, 430, 25, 180));
+        plataformas.add(new Plataforma(3500, 430, 180, 25));
+        plataformas.add(new Plataforma(4200, 430, 25, 180));
+        plataformas.add(new Plataforma(4400, 430, 180, 25));
+
+
+
+        //primera isla
         entidades.add(new CarroBomba(830, 500, 40, 40, 2, 830, 2000));
         entidades.add(new CarroBomba(900, 500, 40, 40, 2, 900, 2000));
         entidades.add(new CarroBomba(970, 500, 40, 40, 2, 970, 2000));
         entidades.add(new CarroBomba(1040, 500, 40, 40, 2, 1040, 2000));
         entidades.add(new CarroBomba(1110, 500, 40, 40, 2, 1110, 2000));
 
+        //segunda isla
+        entidades.add(new Capacitor(2300, 360, 40, 40, 4, 2200, 2930));
+        entidades.add(new Capacitor(3070, 360, 40, 40, 5, 3070, 4200));
+        entidades.add(new CarroBomba(3100, 500, 40, 40, 4, 3100, 4200));
+
+
+        //ITEEEEEEEEMS
         entidades.add(new Item(230, 390, 40, 40));
         entidades.add(new Item(470, 340, 40, 40));
         entidades.add(new Item(690, 300, 40, 40));   // escalera de items
 
+        //segunda isla
+        entidades.add(new Item(2330, 390, 40, 40));
+        entidades.add(new Item(2570, 340, 40, 40));
+        entidades.add(new Item(2790, 390, 40, 40));
+
         entidades.add(new Item(1550, 370, 40, 40));
+
+        entidades.add(new Item(3540, 370, 40, 40));
 
         // Setup loop
         loop = new AnimationTimer() {
@@ -207,6 +237,7 @@ public class Game {
             if (en instanceof Enemigo) {
                 if (jugador.getBounds().intersects(en.getBounds())) {
                     jugador.setVivo(false);
+
                 }
             }
             if (en instanceof Item item){
@@ -286,7 +317,7 @@ public class Game {
         gc.restore();
 
         // HUD (no se mueve con la cámara)
-        gc.setFill(Color.WHITE);
+        gc.setFill(Color.RED);
         Font pixelFont = Font.loadFont("file:assets/fonts/Minecraft.ttf", 24);
         gc.setFont(pixelFont); // ← ESTA ES LA PARTE QUE FALTABA
 
@@ -298,14 +329,14 @@ public class Game {
             gc.fillRect(0, 0, width, height);
 
             gc.setFont(pixelFont);
-            gc.setFill(Color.WHITE);
+            gc.setFill(Color.RED);
             gc.fillText("¡Has perdido!", width/2 - 100, height/2);
         }
 
 
         // Mostrar mensaje sobre el HUD
         if (mensajeTimer > 0) {
-            gc.setFill(Color.BLACK);
+            gc.setFill(Color.GREEN);
             gc.setFont(pixelFont);
             gc.fillText(mensajeAleado, 20, 90);
             mensajeTimer--;

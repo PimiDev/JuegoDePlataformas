@@ -53,6 +53,13 @@ public class Jugador extends Entidad {
         isMoviendoseIzquierda = false;
     }
 
+    public void respawn() {
+        x = 50;
+        y = 450;
+        vivo = true;
+        velY = 0;
+    }
+
     public boolean saltar() {
         if (enSuelo) {
             velY = -12;
