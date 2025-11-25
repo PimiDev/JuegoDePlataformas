@@ -17,10 +17,8 @@ import java.util.Set;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 
+public class Game extends Canvas {
 
-
-public class Game {
-    private final Canvas canvas;
     private final GraphicsContext gc;
     private final int width;
     private final int height;
@@ -33,6 +31,9 @@ public class Game {
     private Image fondo;
     private AnimationTimer loop;
 
+    private Main main;        // referencia al Main
+    private boolean cargar;   // si se debe cargar el progreso
+
     private MediaPlayer musica;
     private double cameraX = 0;
 
@@ -43,33 +44,37 @@ public class Game {
     private MediaPlayer sonidoSalto;
 
 
-    public Game(int width, int height) {
-        this.width = width;
-        this.height = height;
-        this.canvas = new Canvas(width, height);
-        this.gc = canvas.getGraphicsContext2D();
+    public Game(Main main, boolean cargar) {
+        super(800, 600);
+        this.main = main;
+        this.cargar = cargar;
+
+        this.width = 800;
+        this.height = 600;
+
+        this.gc = getGraphicsContext2D();
+
         init();
     }
 
-    public Canvas getCanvas() { return canvas; }
+    public void init() {
 
-    private void init() {
         fondo = new Image("file:assets/images/fondo2.jpg");
 
         archivoJuego = new ArchivoJuego("datos/progreso.txt");
         entidades = new ArrayList<>();
         plataformas = new ArrayList<>();
 
-        // crea jugador en spawn por defecto (estos valores serán sobrescritos si hay guardado)
+        // Jugador por defecto (si hay guardado, se sobrescribe luego)
         jugador = new Jugador(50, 450, 48, 72);
         entidades.add(jugador);
 
-
-        // Aliado al inicio
-        entidades.add(new Pimi(100, 450, 48, 72));
+        // Aliados
+        entidades.add(new Pimi(100, 469, 48, 72));
         entidades.add(new Derek(2500, 450, 48, 88));
-    
-        plataformas.add(new Plataforma(0, 540, 2000, 60));       // suelo largo
+
+        // Plataforma base + extras
+        plataformas.add(new Plataforma(0, 540, 2000, 60));
         plataformas.add(new Plataforma(2200, 540, 2000, 60));
         plataformas.add(new Plataforma(200, 430, 150, 25));
         plataformas.add(new Plataforma(420, 380, 150, 25));
@@ -83,7 +88,7 @@ public class Game {
         plataformas.add(new Plataforma(4200, 430, 25, 180));
         plataformas.add(new Plataforma(4400, 430, 180, 25));
 
-        // Entidades / enemigos / items (igual que antes)
+        // enemigos + items igual que antes
         entidades.add(new CarroBomba(830, 500, 40, 40, 2, 830, 2000));
         entidades.add(new CarroBomba(900, 500, 40, 40, 2, 900, 2000));
         entidades.add(new CarroBomba(970, 500, 40, 40, 2, 970, 2000));
@@ -101,7 +106,34 @@ public class Game {
         entidades.add(new Item(1550, 370, 40, 40));
         entidades.add(new Item(3540, 370, 40, 40));
 
-        // Setup loop
+        // cargar progreso
+        if (cargar) {
+            try {
+                ArchivoJuego.Progreso p = archivoJuego.cargar();
+                if (p != null) {
+                    jugador.setPuntaje(p.puntaje);
+                    jugador.setX(p.x);
+                    jugador.setY(p.y);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        iniciarMusica();
+
+        // sonidos
+        try {
+            Media mItem = new Media(new java.io.File("assets/sounds/item.mp3").toURI().toString());
+            sonidoItem = new MediaPlayer(mItem);
+        } catch (Exception ignored) {}
+
+        try {
+            Media mSalto = new Media(new java.io.File("assets/sounds/jump.mp3").toURI().toString());
+            sonidoSalto = new MediaPlayer(mSalto);
+        } catch (Exception ignored) {}
+
+        // loop principal
         loop = new AnimationTimer() {
             private long last = 0;
             @Override
@@ -114,93 +146,84 @@ public class Game {
             }
         };
 
-        try {
-            ArchivoJuego.Progreso p = archivoJuego.cargar();
-            if (p != null) {
-                jugador.setPuntaje(p.puntaje);
-                jugador.setX(p.x);
-                jugador.setY(p.y);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        iniciarMusica();
-
-        try {
-            Media mItem = new Media(new java.io.File("assets/sounds/item.mp3").toURI().toString());
-            sonidoItem = new MediaPlayer(mItem);
-        } catch (Exception e) {
-            System.out.println("No se pudo cargar el sonido del item");
-        }
-
-        try {
-            Media mSalto = new Media(new java.io.File("assets/sounds/jump.mp3").toURI().toString());
-            sonidoSalto = new MediaPlayer(mSalto);
-        } catch (Exception e) {
-            System.out.println("No se pudo cargar el sonido de salto");
-        }
+        loop.start();
     }
 
-    private void iniciarMusica() {
+
+    public void iniciarMusica() {
         try {
             String path = "assets/music/fuerteNoSoy.mp3";
             Media m = new Media(new java.io.File(path).toURI().toString());
             musica = new MediaPlayer(m);
-            musica.setCycleCount(MediaPlayer.INDEFINITE); // loop infinito
-            musica.setVolume(10);
+            musica.setCycleCount(MediaPlayer.INDEFINITE);
+            musica.setVolume(0.3);
             musica.play();
-        } catch (Exception e) {
-            System.out.println("No se pudo cargar la música: " + e.getMessage());
-        }
+        } catch (Exception ignored) {}
     }
-
 
     public void setupInput(Scene scene) {
         scene.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
             keys.add(e.getCode());
+
             if (e.getCode() == KeyCode.S) {
-                guardar();
+                guardarYSalir();
             }
         });
+
         scene.addEventHandler(KeyEvent.KEY_RELEASED, e -> {
             keys.remove(e.getCode());
 
             if (e.getCode() == KeyCode.LEFT || e.getCode() == KeyCode.RIGHT) {
-
-                // PERO SIGUES PRESIONANDO OTRA → NO QUIETO
                 if (keys.contains(KeyCode.LEFT)) return;
                 if (keys.contains(KeyCode.RIGHT)) return;
-
-                if (jugador.puedeMoverse()) {
-                    jugador.quedarseQuieto();
-                }
+                if (jugador.puedeMoverse()) jugador.quedarseQuieto();
             }
         });
     }
 
-    public void start() { loop.start(); }
+    public void guardarYSalir() {
+        guardar();
 
-    private void actualizar(double delta) {
-        // input
-        // Sólo procesar movimiento si el jugador está vivo y puede moverse
+        if (musica != null) musica.stop();
+        loop.stop();
+
+        main.regresarMenu();
+    }
+
+    public void guardar() {
+        try {
+            ArchivoJuego.Progreso p = new ArchivoJuego.Progreso(
+                    jugador.getPuntaje(),
+                    "player",
+                    jugador.getX(),
+                    jugador.getY()
+            );
+            archivoJuego.guardar(p);
+            System.out.println("Guardado OK");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void start() {
+        loop.start();
+    }
+
+    public void actualizar(double delta) {
         if (jugador.isVivo() && jugador.puedeMoverse()) {
             if (keys.contains(KeyCode.LEFT)) jugador.moverIzquierda();
             if (keys.contains(KeyCode.RIGHT)) jugador.moverDerecha();
-            if (keys.contains(KeyCode.SPACE)){
-                if (jugador.saltar()) {     // si el salto realmente ocurrió
-                    if (sonidoSalto != null) {
-                        sonidoSalto.stop();
-                        sonidoSalto.play();
-                    }
+            if (keys.contains(KeyCode.SPACE)) {
+                if (jugador.saltar() && sonidoSalto != null) {
+                    sonidoSalto.stop();
+                    sonidoSalto.play();
                 }
             }
         }
-
-        for (Entidad en : entidades) en.update();
-
+        for (Entidad en : entidades) {
+            en.update();
+        }
         jugador.applyGravity();
-
 
         boolean onPlatform = false;
         for (Plataforma p : plataformas) {
@@ -211,77 +234,65 @@ public class Game {
         }
         if (!onPlatform) jugador.setEnSuelo(false);
 
-        // collisions with enemies
         for (Entidad en : entidades) {
+
             if (en instanceof Enemigo) {
                 if (jugador.getBounds().intersects(en.getBounds())) {
-                    // si estaba vivo, llamamos a morir() para bloquear input y sonar
                     if (jugador.isVivo()) {
                         jugador.morir();
+
+                        // detener música de fondo
+                        if (musica != null) musica.stop();
                     }
                 }
             }
-            if (en instanceof Item item){
-                if (!item.isRecogido() && jugador.getBounds().intersects(en.getBounds())) {
 
+            if (en instanceof Item item) {
+                if (!item.isRecogido() && jugador.getBounds().intersects(item.getBounds())) {
                     item.recoger();
                     jugador.addPuntaje(1);
-
-                    // 🔊 Reproducir sonido
                     if (sonidoItem != null) {
-                        sonidoItem.stop();  // reinicia si ya se había reproducido
+                        sonidoItem.stop();
                         sonidoItem.play();
                     }
                 }
             }
 
             if (en instanceof Aliado aliado) {
-                aliado.applyGravity();
-                if (jugador.getBounds().intersects(aliado.getBounds())) {
-                    mensajeAleado = aliado.getMensaje();
-                    mensajeTimer = 600; // 3 segundos aprox
-                }
-
-                for(Plataforma p : plataformas) {
-                    if (aliado.getBounds().intersects(p.getBounds())) {
-                        aliado.landOn(p);
-                    }
+                String msg = aliado.revisarColisionVisual(jugador);
+                if (msg != null) {
+                    mensajeAleado = msg;
+                    mensajeTimer = 180;
                 }
             }
+            cameraX = jugador.getX() - width / 2;
+            if (cameraX < 0) cameraX = 0;
         }
-        cameraX = jugador.getX() - width / 2;
-        if (cameraX < 0) cameraX = 0;
     }
 
-    private void dibujar() {
-        // clear pantalla
+    public void dibujar() {
         gc.setFill(Color.BLACK);
         gc.fillRect(0, 0, width, height);
 
-        // FONDO SCROLL
         if (fondo != null) {
             gc.setImageSmoothing(false);
 
-            double offsetX = cameraX * 0.5; // la velocidad del fondo, 0.5 = más lento que jugador (parallax)
+            double offsetX = cameraX * 0.5;
             double fondoWidth = fondo.getWidth();
 
-            // Dibuja el fondo varias veces para cubrir la pantalla
             for (double x = -offsetX % fondoWidth; x < width; x += fondoWidth) {
                 gc.drawImage(fondo, x, 0);
             }
         }
 
-        //activar camara
         gc.save();
-        gc.translate(-cameraX, 0);   // mueve todo el mundo
+        gc.translate(-cameraX, 0);
 
-        // dibujar plataformas
-        gc.setFill(Color.SADDLEBROWN);
+        // plataformas
         for (Plataforma p : plataformas) {
             p.draw(gc);
         }
 
-        // dibujar entidades
         for (Entidad e : entidades) {
             e.draw(gc);
         }
@@ -293,39 +304,29 @@ public class Game {
         gc.setFont(pixelFont);
 
         gc.fillText("RESISTENCIAS: " + jugador.getPuntaje(), 20, 30);
-        gc.fillText("Presiona 'S' para guardar", 20, 55);
+        gc.fillText("Presiona 'S' para guardar y salir", 20, 55);
 
         if (!jugador.isVivo()) {
             gc.setFill(Color.color(0,0,0,0.6));
             gc.fillRect(0, 0, width, height);
-
-            gc.setFont(pixelFont);
             gc.setFill(Color.RED);
             gc.fillText("¡Has perdido!", width/2 - 100, height/2);
         }
 
-        // mostrar mensaje
-        if (mensajeTimer > 0) {
-            gc.setFill(Color.GREEN);
-            gc.setFont(pixelFont);
-            gc.fillText(mensajeAleado, 20, 90);
-            mensajeTimer--;
-        }
-    }
+        if (mensajeTimer > 0 && !mensajeAleado.isEmpty()) {
+            gc.setFill(Color.color(0,0,0,0.6));
+            gc.fillRect(100, 50, 600, 120); // cuadro de fondo
 
-    private void guardar() {
-        try {
-            // guardar puntaje y posición X/Y del jugador
-            ArchivoJuego.Progreso p = new ArchivoJuego.Progreso(
-                    jugador.getPuntaje(),
-                    "player",
-                    jugador.getX(),
-                    jugador.getY()
-            );
-            archivoJuego.guardar(p);
-            System.out.println("Partida guardada: x=" + jugador.getX() + " y=" + jugador.getY() + " puntaje=" + jugador.getPuntaje());
-        } catch (Exception e) {
-            e.printStackTrace();
+            gc.setFill(Color.WHITE);
+            Font pixelFont1 = Font.loadFont("file:assets/fonts/Minecraft.ttf", 20);
+            gc.setFont(pixelFont1);
+
+            String[] lineas = mensajeAleado.split("\n");
+            for (int i = 0; i < lineas.length; i++) {
+                gc.fillText(lineas[i], 120, 80 + i * 25);
+            }
+
+            mensajeTimer--; // descontar frames
         }
     }
 }

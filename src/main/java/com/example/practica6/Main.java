@@ -16,18 +16,25 @@ import javafx.util.Duration;
 
 public class Main extends Application {
 
-    @Override
-    public void start(Stage primaryStage) {
+    private Stage stage;
+    private Font minecraftFont;
 
+    @Override
+    public void start(Stage stage) {
+        this.stage = stage;
+
+        minecraftFont = Font.loadFont("file:assets/fonts/Minecraft.ttf", 50);
+
+        mostrarMenu();
+    }
+
+    public void mostrarMenu() {
         StackPane rootMenu = new StackPane();
         rootMenu.setPrefSize(800, 600);
-        rootMenu.setStyle("-fx-background-color: black;"); // fondo negro
+        rootMenu.setStyle("-fx-background-color: black;");
 
         VBox menu = new VBox(25);
         menu.setAlignment(Pos.CENTER);
-
-        // Cargar fuente Minecraft.ttf
-        Font minecraftFont = Font.loadFont("file:assets/fonts/Minecraft.ttf", 50);
 
         // Título
         Text title = new Text("PLATAFORMERO JAVA");
@@ -36,42 +43,40 @@ public class Main extends Application {
         title.setEffect(new DropShadow(10, Color.GRAY));
 
         // Botones
-        Button btnStart = new Button("Iniciar Juego");
+        Button btnNuevo = new Button("Nuevo Juego");
+        Button btnContinuar = new Button("Continuar");
         Button btnSalir = new Button("Salir");
 
-        // Estilizar botones con la misma fuente
-        estilizarBoton(btnStart, minecraftFont);
+        estilizarBoton(btnNuevo, minecraftFont);
+        estilizarBoton(btnContinuar, minecraftFont);
         estilizarBoton(btnSalir, minecraftFont);
 
-        menu.getChildren().addAll(title, btnStart, btnSalir);
+        menu.getChildren().addAll(title, btnNuevo, btnContinuar, btnSalir);
         rootMenu.getChildren().add(menu);
 
         Scene menuScene = new Scene(rootMenu, 800, 600);
 
-        // ---- Escena del juego ----
-        Game game = new Game(800, 600);
-        StackPane rootGame = new StackPane(game.getCanvas());
+        // Configurar acciones de los botones con transición fade
+        btnNuevo.setOnAction(e -> iniciarJuego(false, rootMenu));
+        btnContinuar.setOnAction(e -> iniciarJuego(true, rootMenu));
+        btnSalir.setOnAction(e -> stage.close());
+
+        stage.setTitle("Menú Principal - Minecraft Style");
+        stage.setScene(menuScene);
+        stage.show();
+    }
+
+    private void iniciarJuego(boolean cargarProgreso, StackPane rootMenu) {
+        Game game = new Game(this, cargarProgreso);
+        StackPane rootGame = new StackPane(game);
         Scene gameScene = new Scene(rootGame, 800, 600);
         game.setupInput(gameScene);
 
-        // Acción botón Iniciar Juego con transición
-        btnStart.setOnAction(e -> {
-            FadeTransition fadeOut = new FadeTransition(Duration.millis(600), rootMenu);
-            fadeOut.setFromValue(1.0);
-            fadeOut.setToValue(0.0);
-            fadeOut.setOnFinished(ev -> {
-                primaryStage.setScene(gameScene);
-                game.start();
-            });
-            fadeOut.play();
-        });
-
-        // Botón salir
-        btnSalir.setOnAction(e -> primaryStage.close());
-
-        primaryStage.setTitle("Artemio's Adventure - JavaFX");
-        primaryStage.setScene(menuScene);
-        primaryStage.show();
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(600), rootMenu);
+        fadeOut.setFromValue(1.0);
+        fadeOut.setToValue(0.0);
+        fadeOut.setOnFinished(ev -> stage.setScene(gameScene));
+        fadeOut.play();
     }
 
     private void estilizarBoton(Button b, Font font) {
@@ -108,6 +113,10 @@ public class Main extends Application {
                 -fx-border-color: white;
                 -fx-border-width: 2;
                 """));
+    }
+
+    public void regresarMenu() {
+        mostrarMenu();
     }
 
     public static void main(String[] args) {

@@ -1,0 +1,4 @@
+puntaje=4
+jugador=player
+x=1645.0
+y=358.0
